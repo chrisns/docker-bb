@@ -1,0 +1,23 @@
+name: Docker Image CI
+on: [push]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v1
+
+      - name: Build
+        run: docker build -t chrisns/aa:latest .
+
+      - name: Docker login
+        if: github.ref == 'refs/heads/master'
+        env:
+          docker_username: ${{ secrets.docker_username }}
+          docker_password: ${{ secrets.docker_password }}
+        run: docker login  -u $docker_username -p ${docker_password}
+
+      - name: Push
+        if: github.ref == 'refs/heads/master'
+        run: docker push chrisns/aa
