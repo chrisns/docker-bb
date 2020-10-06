@@ -1,9 +1,13 @@
 version: 2
 updates:
-- package-ecosystem: docker
-  directory: "/"
-  schedule:
-    interval: daily
-    time: '02:00'
-    timezone: Europe/London
-  open-pull-requests-limit: 10
+  - package-ecosystem: "docker" # See documentation for possible values
+    directory: "/" # Location of package manifests
+    schedule:
+      interval: "daily"
+    labels:
+      - "automerge"
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      # Check for updates to GitHub Actions every weekday
+      interval: "daily"
