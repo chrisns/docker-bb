@@ -1,13 +1,10 @@
-version: 2
+version: 3
 updates:
-  - package-ecosystem: "docker" # See documentation for possible values
-    directory: "/" # Location of package manifests
+  - package-ecosystem: docker
+    directory: /
     schedule:
-      interval: "daily"
-    labels:
-      - "automerge"
-  - package-ecosystem: "github-actions"
-    directory: "/"
+      interval: daily
+  - package-ecosystem: github-actions
+    directory: /
     schedule:
-      # Check for updates to GitHub Actions every weekday
-      interval: "daily"
+      interval: daily
