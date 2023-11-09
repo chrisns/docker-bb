@@ -3,7 +3,7 @@ RUN apt-get update
 RUN apt-get install -y wget make gcc curl
 RUN wget https://sourceforge.net/projects/aa-project/files/aa-lib/1.4rc5/aalib-1.4rc5.tar.gz/download
 RUN tar -xzf download && rm download
-WORKDIR aalib-1.4.0
+WORKDIR /aalib-1.4.0
 RUN curl 'http://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=config.guess;hb=HEAD' > ./config.guess
 RUN ./configure
 RUN make
