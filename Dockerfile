@@ -1,4 +1,4 @@
-FROM debian@sha256:60c3ddd3d56d9ca7adad5217fb8c6dc0582f9cddccc54efcbb16911cfdc5bd22 as build
+FROM debian@sha256:b8084b1a576c5504a031936e1132574f4ce1d6cc7130bbcc25a28f074539ae6b as build
 RUN apt-get update
 RUN apt-get install -y wget make gcc curl
 RUN wget https://sourceforge.net/projects/aa-project/files/aa-lib/1.4rc5/aalib-1.4rc5.tar.gz/download
