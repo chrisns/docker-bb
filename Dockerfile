@@ -1,5 +1,17 @@
 FROM alpine:3.19 as build
-RUN apk add --no-cache wget make gcc musl-dev curl
+RUN apk add --no-cache \
+    wget \
+    make \
+    gcc \
+    musl-dev \
+    curl \
+    ncurses-dev \
+    libx11-dev \
+    libxext-dev \
+    slang-dev \
+    autoconf \
+    automake \
+    libtool
 RUN wget https://sourceforge.net/projects/aa-project/files/aa-lib/1.4rc5/aalib-1.4rc5.tar.gz/download
 RUN tar -xzf download && rm download
 WORKDIR /aalib-1.4.0
