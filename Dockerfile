@@ -1,6 +1,5 @@
-FROM debian@sha256:bd73076dc2cd9c88f48b5b358328f24f2a4289811bd73787c031e20db9f97123 as build
-RUN apt-get update
-RUN apt-get install -y wget make gcc curl
+FROM alpine:3.19 as build
+RUN apk add --no-cache wget make gcc musl-dev curl
 RUN wget https://sourceforge.net/projects/aa-project/files/aa-lib/1.4rc5/aalib-1.4rc5.tar.gz/download
 RUN tar -xzf download && rm download
 WORKDIR /aalib-1.4.0
