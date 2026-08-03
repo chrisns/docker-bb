@@ -1,10 +1,10 @@
-# syntax=docker/dockerfile:1
+# syntax=docker/dockerfile:1@sha256:87999aa3d42bdc6bea60565083ee17e86d1f3339802f543c0d03998580f9cb89
 #
 # Cross-compiles bb to wasm32-wasi with zig cc (see the top-level Dockerfile
 # for the same technique targeting native platforms). Run with:
 #   docker build -f web/Dockerfile --output type=local,dest=web/dist .
 # to place bb.wasm directly in web/dist alongside the static page assets.
-FROM --platform=$BUILDPLATFORM debian:trixie-slim AS build
+FROM --platform=$BUILDPLATFORM debian:trixie-slim@sha256:020c0d20b9880058cbe785a9db107156c3c75c2ac944a6aa7ab59f2add76a7bd AS build
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl xz-utils ca-certificates make binutils autotools-dev \
     && rm -rf /var/lib/apt/lists/*
@@ -93,7 +93,7 @@ RUN cp /usr/share/misc/config.guess /usr/share/misc/config.sub . \
 # it independently, client-side, with an existing tracker-module player --
 # libopenmpt (BSD-3-Clause/BSL-1.0) is the mature, actively maintained one,
 # with an official prebuilt WebAssembly build for exactly this.
-FROM --platform=$BUILDPLATFORM debian:trixie-slim AS openmpt
+FROM --platform=$BUILDPLATFORM debian:trixie-slim@sha256:020c0d20b9880058cbe785a9db107156c3c75c2ac944a6aa7ab59f2add76a7bd AS openmpt
 RUN apt-get update && apt-get install -y --no-install-recommends curl ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 ARG LIBOPENMPT_VERSION=0.8.7
