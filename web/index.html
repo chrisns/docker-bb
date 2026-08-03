@@ -17,26 +17,84 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 1rem;
+    gap: 0.75rem;
+    padding: 1rem 0;
+    box-sizing: border-box;
+  }
+  #logo {
+    image-rendering: pixelated;
+    width: 119px;
+    height: 87px;
   }
   pre#screen {
     margin: 0;
     line-height: 1.15;
-    font-size: clamp(6px, 1.1vw, 14px);
     white-space: pre;
   }
+  /* aalib attribute classes (see web/patches/aastdout.c): a green
+     phosphor-CRT palette, in place of the original's VGA text
+     attributes (normal/dim/bold/reverse). */
+  .a0 { color: #4da34d; }
+  .a1 { color: #235923; }
+  .a2 { color: #aef7ae; }
+  .a3 { color: #4da34d; }
+  .a4 { color: #000; background: #4da34d; }
   #status { color: #666; }
+  #sizes {
+    display: flex;
+    gap: 0.4rem;
+  }
+  #sizes button {
+    background: #111;
+    color: #999;
+    border: 1px solid #333;
+    font: inherit;
+    font-size: 0.8rem;
+    padding: 0.2rem 0.6rem;
+    cursor: pointer;
+  }
+  #sizes button:hover { border-color: #666; color: #ccc; }
+  #sizes button[aria-pressed="true"] { color: #0f0; border-color: #0f0; }
   footer {
     color: #444;
-    font-size: 0.8rem;
+    font-size: 0.75rem;
+    text-align: center;
+    max-width: 40rem;
+    line-height: 1.4;
   }
   footer a { color: #666; }
+  footer .blurb {
+    color: #333;
+    font-style: italic;
+    margin-top: 0.4rem;
+  }
 </style>
 </head>
 <body>
+  <img id="logo" src="bb-logo.jpg" alt="bb logo">
+  <div id="sizes"></div>
   <pre id="screen"></pre>
   <div id="status">Loading bb.wasm&hellip;</div>
-  <footer><a href="https://github.com/chrisns/docker-bb">chrisns/docker-bb</a> — bb compiled to wasm32-wasi with zig cc, run client-side</footer>
+  <footer>
+    <div>
+      <a href="https://github.com/chrisns/docker-bb">chrisns/docker-bb</a>
+      — bb compiled to wasm32-wasi with zig cc, run client-side.
+      Original: <a href="https://aa-project.sourceforge.net/aalib/">aa-lib</a>
+      &middot;
+      <a href="https://aa-project.sourceforge.net/bb/">bb</a>
+      (last modified Wed Mar 26 1997)
+    </div>
+    <div class="blurb">
+      &ldquo;This demo requires computer at least as fast as 486/33 with coprocesor.
+      But speed of 486/66 or pentium is highly recomended (especially for hight
+      resolution SVGA modes). This demo does not require real operating system -
+      works even under MS-DOS. For dual monitor modes you need secondary
+      hercules / MDA compatible card. To compile demo you need 32 or 64 bit ANSI C
+      compiler (no it does not compile under Borland one) and libraries listed
+      bellow. PC speaker driver eats lots of CPU so running it at computers
+      slower than pentium is really not good idea.&rdquo;
+    </div>
+  </footer>
   <script type="module" src="app.js"></script>
 </body>
 </html>

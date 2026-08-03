@@ -59,7 +59,14 @@ RUN for f in src/aaslnkbd.c src/aaslang.c src/aacurkbd.c src/aacurmou.c src/aacu
 # setjmp/longjmp aren't supported on wasm32 without the (non-standard)
 # exception-handling proposal, so drop the resize-interrupt trick entirely --
 # it's meaningless here regardless.
+# aastdout.c's driver only advertises AA_NORMAL_MASK, so aa_render() never
+# picks any other attribute class -- attrbuffer is always 0, no color/dim/
+# bold/reverse variation is possible no matter what the web page does with
+# it. Advertise DIM/BOLD/REVERSE too, and emit an attribute plane alongside
+# the character plane (see the file for the exact format web/worker.js
+# expects).
 COPY web/patches/aastdin.c src/aastdin.c
+COPY web/patches/aastdout.c src/aastdout.c
 RUN cp /usr/share/misc/config.guess /usr/share/misc/config.sub . \
     && ./configure --host=wasm32-wasi --disable-shared --enable-static \
     && make && make install
@@ -81,4 +88,4 @@ RUN cp /usr/share/misc/config.guess /usr/share/misc/config.sub . \
 
 FROM scratch AS export
 COPY --from=build /bb-1.3.0/bb /bb.wasm
-COPY web/index.html web/wasi-shim.js web/worker.js web/app.js /
+COPY web/index.html web/wasi-shim.js web/worker.js web/app.js web/bb-logo.jpg /

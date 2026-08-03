@@ -3,20 +3,48 @@
 import { WASI } from "./wasi-shim.js";
 
 // -width/-height pin aalib's stdout driver to an exact, known frame size.
-// aalib's stdout driver (aastdout.c) writes each frame as WIDTH*HEIGHT
-// content bytes (HEIGHT newline-terminated rows) followed by a form-feed
-// and a newline. No -extended: that mode uses aalib's full 256-value
-// palette as raw byte codes meant for the linux/curses drivers' custom
-// font remapping, not as printable text -- fed into textContent, those
-// bytes produce invalid-UTF-8 replacement glyphs and, worse, spurious
-// embedded newlines wherever a "pixel" happens to equal 0x0A or 0x0C.
-// The plain character set is safe, printable ASCII. Even so, count
-// bytes for framing rather than scanning for the trailer -- more robust
-// regardless of what's in the content.
-const WIDTH = 80;
-const HEIGHT = 25;
-const FRAME_BYTES = WIDTH * HEIGHT + HEIGHT;
-const FRAME_STRIDE = FRAME_BYTES + 2; // + trailing "\f\n"
+// The patched web/patches/aastdout.c (see that file) writes each frame as
+// two WIDTH*HEIGHT+HEIGHT-byte planes -- a character plane, then an
+// attribute-class plane (each cell's class 0-4 as an ASCII digit) -- then
+// a form-feed and a newline. No -extended: that mode uses aalib's full
+// 256-value character palette as raw byte codes meant for the linux/
+// curses drivers' custom font remapping, not as printable text -- fed
+// into the page, those bytes produce invalid-UTF-8 replacement glyphs
+// and, worse, spurious embedded newlines wherever a "pixel" happens to
+// equal 0x0A or 0x0C. The plain character set is safe, printable ASCII.
+// Even so, count bytes for framing rather than scanning for the
+// trailer -- more robust regardless of what's in the content.
+const params = new URL(self.location.href).searchParams;
+const WIDTH = Number(params.get("w")) || 80;
+const HEIGHT = Number(params.get("h")) || 25;
+const ROW_BYTES = WIDTH + 1; // + row newline
+const PLANE_BYTES = ROW_BYTES * HEIGHT;
+const FRAME_STRIDE = 2 * PLANE_BYTES + 2; // char plane + attr plane + "\f\n"
+
+postMessage({ type: "meta", width: WIDTH, height: HEIGHT });
+
+function toRows(frame) {
+  const chars = frame.subarray(0, PLANE_BYTES);
+  const attrs = frame.subarray(PLANE_BYTES, 2 * PLANE_BYTES);
+  const decoder = new TextDecoder();
+  const rows = [];
+  for (let y = 0; y < HEIGHT; y++) {
+    const rowOffset = y * ROW_BYTES;
+    const segments = [];
+    let start = 0;
+    let currentAttr = attrs[rowOffset] - 0x30;
+    for (let x = 1; x <= WIDTH; x++) {
+      const attr = x < WIDTH ? attrs[rowOffset + x] - 0x30 : -1;
+      if (attr !== currentAttr) {
+        segments.push([currentAttr, decoder.decode(chars.subarray(rowOffset + start, rowOffset + x))]);
+        start = x;
+        currentAttr = attr;
+      }
+    }
+    rows.push(segments);
+  }
+  return rows;
+}
 
 let pending = new Uint8Array(0);
 
@@ -28,8 +56,7 @@ function append(bytes) {
 
   let offset = 0;
   while (offset + FRAME_STRIDE <= pending.length) {
-    const frame = pending.subarray(offset, offset + FRAME_BYTES);
-    postMessage(new TextDecoder().decode(frame));
+    postMessage({ type: "frame", rows: toRows(pending.subarray(offset, offset + FRAME_STRIDE)) });
     offset += FRAME_STRIDE;
   }
   pending = pending.subarray(offset);
