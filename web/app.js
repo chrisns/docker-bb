@@ -63,7 +63,7 @@ function startWorker(size) {
 }
 
 function fitFont() {
-  const reserved = ["logo", "sizes", "status"]
+  const reserved = ["logo", "sizes", "music", "status"]
     .map((id) => document.getElementById(id))
     .reduce((sum, el) => sum + (el && el.isConnected ? el.getBoundingClientRect().height + 12 : 0), 0);
   const footer = document.querySelector("footer").getBoundingClientRect().height;

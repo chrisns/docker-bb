@@ -55,6 +55,16 @@
   }
   #sizes button:hover { border-color: #666; color: #ccc; }
   #sizes button[aria-pressed="true"] { color: #0f0; border-color: #0f0; }
+  #music {
+    background: #111;
+    color: #999;
+    border: 1px solid #333;
+    font: inherit;
+    font-size: 0.8rem;
+    padding: 0.2rem 0.6rem;
+    cursor: pointer;
+  }
+  #music:hover { border-color: #666; color: #ccc; }
   footer {
     color: #444;
     font-size: 0.75rem;
@@ -73,6 +83,7 @@
 <body>
   <img id="logo" src="bb-logo.jpg" alt="bb logo">
   <div id="sizes"></div>
+  <button id="music">🔇 Play music</button>
   <pre id="screen"></pre>
   <div id="status">Loading bb.wasm&hellip;</div>
   <footer>
@@ -82,7 +93,8 @@
       Original: <a href="https://aa-project.sourceforge.net/aalib/">aa-lib</a>
       &middot;
       <a href="https://aa-project.sourceforge.net/bb/">bb</a>
-      (last modified Wed Mar 26 1997)
+      (last modified Wed Mar 26 1997).
+      Music playback: <a href="https://lib.openmpt.org/libopenmpt/">libopenmpt</a>
     </div>
     <div class="blurb">
       &ldquo;This demo requires computer at least as fast as 486/33 with coprocesor.
@@ -96,5 +108,26 @@
     </div>
   </footer>
   <script type="module" src="app.js"></script>
+  <script>
+    // This build of libopenmpt.js doesn't expose HEAPU8/HEAPF32/ccall/etc on
+    // the Module object (only _malloc/_free and the _openmpt_* functions),
+    // so there's no supported way to read or write the bytes _malloc'd
+    // pointers refer to. Capture the wasm instance's own exports -- the
+    // memory it holds is real regardless of what the module chooses to
+    // expose -- by wrapping the WebAssembly APIs it instantiates itself
+    // with, and build our own typed array views directly over its buffer.
+    window.libopenmpt = {};
+    for (const name of ["instantiateStreaming", "instantiate"]) {
+      const orig = WebAssembly[name];
+      WebAssembly[name] = async function (...args) {
+        const result = await orig.apply(WebAssembly, args);
+        const instance = result.instance || result;
+        window.__wasmExports = instance.exports;
+        return result;
+      };
+    }
+  </script>
+  <script src="libopenmpt.js"></script>
+  <script src="audio.js"></script>
 </body>
 </html>

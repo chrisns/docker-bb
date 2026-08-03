@@ -86,6 +86,22 @@ RUN cp /usr/share/misc/config.guess /usr/share/misc/config.sub . \
     && ./configure --host=wasm32-wasi \
     && make LDFLAGS="-static"
 
+# bb never compiled in sound (libmikmod is missing, per its own configure
+# output), and there's no realistic path to changing that: WASI has no
+# audio API at all, so even a working libmikmod couldn't play anything
+# from inside the wasm module. Playing bb's actual soundtrack means doing
+# it independently, client-side, with an existing tracker-module player --
+# libopenmpt (BSD-3-Clause/BSL-1.0) is the mature, actively maintained one,
+# with an official prebuilt WebAssembly build for exactly this.
+FROM --platform=$BUILDPLATFORM debian:trixie-slim AS openmpt
+RUN apt-get update && apt-get install -y --no-install-recommends curl ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+ARG LIBOPENMPT_VERSION=0.8.7
+RUN curl -fL "https://lib.openmpt.org/files/libopenmpt/dev/libopenmpt-${LIBOPENMPT_VERSION}+release.dev.js.tar.gz" | tar -xz -C /opt \
+    && mv "/opt/libopenmpt-${LIBOPENMPT_VERSION}+release/bin/wasm" /opt/libopenmpt
+
 FROM scratch AS export
 COPY --from=build /bb-1.3.0/bb /bb.wasm
-COPY web/index.html web/wasi-shim.js web/worker.js web/app.js web/bb-logo.jpg /
+COPY --from=build /bb-1.3.0/bb.s3m /bb.s3m
+COPY --from=openmpt /opt/libopenmpt/libopenmpt.js /opt/libopenmpt/libopenmpt.wasm /
+COPY web/index.html web/wasi-shim.js web/worker.js web/app.js web/audio.js web/bb-logo.jpg /
