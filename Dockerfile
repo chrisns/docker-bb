@@ -1,11 +1,11 @@
-# syntax=docker/dockerfile:1
+# syntax=docker/dockerfile:1@sha256:87999aa3d42bdc6bea60565083ee17e86d1f3339802f543c0d03998580f9cb89
 #
 # True cross-compilation, no QEMU: this stage always runs on the native
 # builder architecture (--platform=$BUILDPLATFORM) and uses zig cc [1] to
 # cross-compile static musl binaries for every requested TARGETPLATFORM.
 # Faster and far more reliable than emulating apt/configure/make per-arch.
 # [1] https://andrewkelley.me/post/zig-cc-powerful-drop-in-substitute-gcc-clang.html
-FROM --platform=$BUILDPLATFORM debian:trixie-slim AS build
+FROM --platform=$BUILDPLATFORM debian:trixie-slim@sha256:020c0d20b9880058cbe785a9db107156c3c75c2ac944a6aa7ab59f2add76a7bd AS build
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl xz-utils ca-certificates make binutils autotools-dev \
     && rm -rf /var/lib/apt/lists/*
