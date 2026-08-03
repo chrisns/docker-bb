@@ -65,8 +65,8 @@ RUN for f in src/aaslnkbd.c src/aaslang.c src/aacurkbd.c src/aacurmou.c src/aacu
 # it. Advertise DIM/BOLD/REVERSE too, and emit an attribute plane alongside
 # the character plane (see the file for the exact format web/worker.js
 # expects).
-COPY web/patches/aastdin.c src/aastdin.c
-COPY web/patches/aastdout.c src/aastdout.c
+COPY web/patches/aastdin.c.txt src/aastdin.c
+COPY web/patches/aastdout.c.txt src/aastdout.c
 RUN cp /usr/share/misc/config.guess /usr/share/misc/config.sub . \
     && ./configure --host=wasm32-wasi --disable-shared --enable-static \
     && make && make install
