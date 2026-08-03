@@ -12,6 +12,8 @@ const DEFAULT_SIZE = SIZES[1];
 
 const FPS = 20;
 const MAX_QUEUE = 4; // drop backlog rather than let display lag behind
+const CHAR_W_RATIO = 0.6; // ~character-width:font-size ratio for monospace
+const LINE_H_RATIO = 1.2; // ~line-height:font-size ratio
 
 const ESCAPE = { "&": "&amp;", "<": "&lt;", ">": "&gt;" };
 const escapeHtml = (s) => s.replace(/[&<>]/g, (c) => ESCAPE[c]);
@@ -37,6 +39,7 @@ let worker = null;
 let queue = [];
 let cols = DEFAULT_SIZE.w;
 let rows = DEFAULT_SIZE.h;
+let manualSize = DEFAULT_SIZE; // restored when leaving fullscreen's auto-res
 
 function startWorker(size) {
   if (worker) worker.terminate();
@@ -62,17 +65,38 @@ function startWorker(size) {
   };
 }
 
+function reservedHeight() {
+  const ids = document.fullscreenElement ? ["controls"] : ["logo", "sizes", "controls", "status"];
+  const els = ids.map((id) => document.getElementById(id));
+  const footer = document.fullscreenElement ? 0 : document.querySelector("footer").getBoundingClientRect().height;
+  return els.reduce((sum, el) => sum + (el && el.isConnected ? el.getBoundingClientRect().height + 12 : 0), 0) + footer;
+}
+
 function fitFont() {
-  const reserved = ["logo", "sizes", "music", "status"]
-    .map((id) => document.getElementById(id))
-    .reduce((sum, el) => sum + (el && el.isConnected ? el.getBoundingClientRect().height + 12 : 0), 0);
-  const footer = document.querySelector("footer").getBoundingClientRect().height;
   const availWidth = window.innerWidth - 32;
-  const availHeight = window.innerHeight - reserved - footer - 48;
-  const fontByWidth = availWidth / cols / 0.6; // ~character-width:font-size ratio for monospace
-  const fontByHeight = availHeight / rows / 1.2; // ~line-height:font-size ratio
+  const availHeight = window.innerHeight - reservedHeight() - 16;
+  const fontByWidth = availWidth / cols / CHAR_W_RATIO;
+  const fontByHeight = availHeight / rows / LINE_H_RATIO;
   const fontSize = Math.max(3, Math.min(fontByWidth, fontByHeight, 22));
   screen.style.fontSize = `${fontSize}px`;
+}
+
+// Fullscreen goes for maximum ascii resolution rather than reusing
+// whichever preset was picked before -- a target character-cell size,
+// scaled to however much screen the user actually has (an ultrawide gets
+// a proportionally wider grid, not just a bigger font on the same 80x25).
+const AUTO_CHAR_PX = 8;
+const AUTO_MIN = { w: 40, h: 12 };
+const AUTO_MAX = { w: 300, h: 100 };
+function computeAutoSize() {
+  const availWidth = window.innerWidth - 16;
+  const availHeight = window.innerHeight - reservedHeight() - 16;
+  const w = Math.round(availWidth / (AUTO_CHAR_PX * CHAR_W_RATIO));
+  const h = Math.round(availHeight / (AUTO_CHAR_PX * LINE_H_RATIO));
+  return {
+    w: Math.max(AUTO_MIN.w, Math.min(w, AUTO_MAX.w)),
+    h: Math.max(AUTO_MIN.h, Math.min(h, AUTO_MAX.h)),
+  };
 }
 
 for (const size of SIZES) {
@@ -81,12 +105,29 @@ for (const size of SIZES) {
   button.setAttribute("aria-pressed", size === DEFAULT_SIZE);
   button.onclick = () => {
     for (const b of sizesEl.children) b.setAttribute("aria-pressed", b === button);
+    manualSize = size;
     startWorker(size);
   };
   sizesEl.appendChild(button);
 }
 
 window.addEventListener("resize", fitFont);
+
+const fullscreenButton = document.getElementById("fullscreen");
+fullscreenButton.onclick = () => {
+  if (document.fullscreenElement) document.exitFullscreen();
+  else document.body.requestFullscreen();
+};
+document.addEventListener("fullscreenchange", () => {
+  fullscreenButton.textContent = document.fullscreenElement ? "⛶ Exit fullscreen" : "⛶ Fullscreen";
+  if (document.fullscreenElement) {
+    startWorker(computeAutoSize());
+    screen.style.fontSize = `${AUTO_CHAR_PX}px`;
+  } else {
+    startWorker(manualSize);
+  }
+});
+
 startWorker(DEFAULT_SIZE);
 
 setInterval(() => {
