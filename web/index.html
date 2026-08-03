@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>bb — ASCII art demo (WebAssembly)</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  html, body {
+    height: 100%;
+    margin: 0;
+    background: #000;
+    color: #ccc;
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  }
+  body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    padding: 1rem 0;
+    box-sizing: border-box;
+  }
+  #logo {
+    image-rendering: pixelated;
+    width: 119px;
+    height: 87px;
+  }
+  pre#screen {
+    margin: 0;
+    line-height: 1.15;
+    white-space: pre;
+  }
+  /* aalib attribute classes (see web/patches/aastdout.c): a green
+     phosphor-CRT palette, in place of the original's VGA text
+     attributes (normal/dim/bold/reverse). */
+  .a0 { color: #4da34d; }
+  .a1 { color: #235923; }
+  .a2 { color: #aef7ae; }
+  .a3 { color: #4da34d; }
+  .a4 { color: #000; background: #4da34d; }
+  #status { color: #666; }
+  #sizes {
+    display: flex;
+    gap: 0.4rem;
+  }
+  #sizes button {
+    background: #111;
+    color: #999;
+    border: 1px solid #333;
+    font: inherit;
+    font-size: 0.8rem;
+    padding: 0.2rem 0.6rem;
+    cursor: pointer;
+  }
+  #sizes button:hover { border-color: #666; color: #ccc; }
+  #sizes button[aria-pressed="true"] { color: #0f0; border-color: #0f0; }
+  #controls {
+    display: flex;
+    gap: 0.4rem;
+  }
+  #music, #fullscreen {
+    background: #111;
+    color: #999;
+    border: 1px solid #333;
+    font: inherit;
+    font-size: 0.8rem;
+    padding: 0.2rem 0.6rem;
+    cursor: pointer;
+  }
+  #music:hover, #fullscreen:hover { border-color: #666; color: #ccc; }
+  /* Immersive: the ascii art is the whole point, so hide everything else
+     while fullscreen (the browser's own UI is already gone; go further). */
+  body:fullscreen #logo,
+  body:fullscreen #sizes,
+  body:fullscreen footer { display: none; }
+  body:fullscreen { justify-content: center; padding: 0; gap: 0; }
+  footer {
+    color: #444;
+    font-size: 0.75rem;
+    text-align: center;
+    max-width: 40rem;
+    line-height: 1.4;
+  }
+  footer a { color: #666; }
+  footer .blurb {
+    color: #333;
+    font-style: italic;
+    margin-top: 0.4rem;
+  }
+</style>
+</head>
+<body>
+  <img id="logo" src="bb-logo.jpg" alt="bb logo">
+  <div id="sizes"></div>
+  <div id="controls">
+    <button id="music">🔇 Play music</button>
+    <button id="fullscreen">⛶ Fullscreen</button>
+  </div>
+  <pre id="screen"></pre>
+  <div id="status">Loading bb.wasm&hellip;</div>
+  <footer>
+    <div>
+      <a href="https://github.com/chrisns/docker-bb">chrisns/docker-bb</a>
+      — bb compiled to wasm32-wasi with zig cc, run client-side.
+      Original: <a href="https://aa-project.sourceforge.net/aalib/">aa-lib</a>
+      &middot;
+      <a href="https://aa-project.sourceforge.net/bb/">bb</a>
+      (last modified Wed Mar 26 1997).
+      Music playback: <a href="https://lib.openmpt.org/libopenmpt/">libopenmpt</a>
+    </div>
+    <div class="blurb">
+      &ldquo;This demo requires computer at least as fast as 486/33 with coprocesor.
+      But speed of 486/66 or pentium is highly recomended (especially for hight
+      resolution SVGA modes). This demo does not require real operating system -
+      works even under MS-DOS. For dual monitor modes you need secondary
+      hercules / MDA compatible card. To compile demo you need 32 or 64 bit ANSI C
+      compiler (no it does not compile under Borland one) and libraries listed
+      bellow. PC speaker driver eats lots of CPU so running it at computers
+      slower than pentium is really not good idea.&rdquo;
+    </div>
+  </footer>
+  <script type="module" src="app.js"></script>
+  <script>
+    // This build of libopenmpt.js doesn't expose HEAPU8/HEAPF32/ccall/etc on
+    // the Module object (only _malloc/_free and the _openmpt_* functions),
+    // so there's no supported way to read or write the bytes _malloc'd
+    // pointers refer to. Capture the wasm instance's own exports -- the
+    // memory it holds is real regardless of what the module chooses to
+    // expose -- by wrapping the WebAssembly APIs it instantiates itself
+    // with, and build our own typed array views directly over its buffer.
+    window.libopenmpt = {};
+    for (const name of ["instantiateStreaming", "instantiate"]) {
+      const orig = WebAssembly[name];
+      WebAssembly[name] = async function (...args) {
+        const result = await orig.apply(WebAssembly, args);
+        const instance = result.instance || result;
+        window.__wasmExports = instance.exports;
+        return result;
+      };
+    }
+  </script>
+  <script src="libopenmpt.js"></script>
+  <script src="audio.js"></script>
+</body>
+</html>
