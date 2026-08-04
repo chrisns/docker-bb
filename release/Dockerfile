@@ -1,4 +1,4 @@
-# syntax=docker/dockerfile:1
+# syntax=docker/dockerfile:1@sha256:87999aa3d42bdc6bea60565083ee17e86d1f3339802f543c0d03998580f9cb89
 #
 # Cross-compiles bb as a single standalone binary for one TARGET (a zig
 # target triple), using the same zig cc technique as the top-level and
@@ -13,7 +13,7 @@
 # Run with:
 #   docker build -f release/Dockerfile --build-arg TARGET=riscv64-linux-musl \
 #     --output type=local,dest=release/dist .
-FROM --platform=$BUILDPLATFORM debian:trixie-slim AS build
+FROM --platform=$BUILDPLATFORM debian:trixie-slim@sha256:020c0d20b9880058cbe785a9db107156c3c75c2ac944a6aa7ab59f2add76a7bd AS build
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl xz-utils ca-certificates make binutils autotools-dev \
     && rm -rf /var/lib/apt/lists/*
