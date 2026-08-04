@@ -1,0 +1,106 @@
+name: Release static binaries
+on:
+  push:
+    branches: [master]
+    paths:
+      - release/**
+      - .github/workflows/release.yml
+  workflow_dispatch:
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        target:
+          # musl: fully static, run-anywhere Linux binaries. Not just the
+          # 6 platforms the multi-arch Docker image covers -- zig can
+          # cross-compile for anything it has an LLVM backend and libc
+          # for, no QEMU or buildx platform required, so this reaches
+          # architectures Docker has no platform for at all.
+          - x86_64-linux-musl
+          - aarch64-linux-musl
+          - aarch64_be-linux-musl
+          - arm-linux-musleabi
+          - arm-linux-musleabihf
+          - x86-linux-musl
+          - riscv32-linux-musl
+          - riscv64-linux-musl
+          - mips-linux-musleabi
+          - mipsel-linux-musleabi
+          - mips64-linux-muslabi64
+          - mips64el-linux-muslabi64
+          - mips64-linux-muslabin32
+          - mips64el-linux-muslabin32
+          - powerpc-linux-musleabihf
+          - powerpc64-linux-musl
+          - powerpc64le-linux-musl
+          - s390x-linux-musl
+          - loongarch64-linux-musl
+          - hexagon-linux-musl
+          # Where Docker doesn't work at all: no Linux container can run
+          # a FreeBSD/NetBSD/OpenBSD/Windows/macOS binary. Native,
+          # dynamically linked against each OS's own libc (musl-style
+          # full static linking isn't available outside Linux) --
+          # Windows is the exception, mingw supports it.
+          - x86_64-freebsd-none
+          - aarch64-freebsd-none
+          - riscv64-freebsd-none
+          - aarch64-netbsd-none
+          - x86_64-openbsd-none
+          - x86_64-macos-none
+          - aarch64-macos-none
+          - x86_64-windows-gnu
+          - aarch64-windows-gnu
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4.2.0
+      - name: Build
+        run: |
+          docker buildx build -f release/Dockerfile \
+            --build-arg TARGET=${{ matrix.target }} \
+            --output type=local,dest=release/dist .
+      - name: Package
+        run: |
+          cd release/dist
+          case "${{ matrix.target }}" in
+            *-windows-gnu)
+              mv bb bb.exe
+              zip -q "../../bb-${{ matrix.target }}.zip" bb.exe
+              ;;
+            *)
+              chmod +x bb
+              tar -czf "../../bb-${{ matrix.target }}.tar.gz" bb
+              ;;
+          esac
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: bb-${{ matrix.target }}
+          path: bb-${{ matrix.target }}.*
+          retention-days: 1
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: '0'
+      - name: Semver run
+        id: semver
+        uses: lukaszraczylo/semver-generator@c70ee7f300379d3f58245a7d94317c7d5bc4ff54 # v1.17.12
+        with:
+          config_file: .github/semver.yaml
+          repository_local: true
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          path: dist
+          pattern: bb-*
+      - uses: softprops/action-gh-release@fe965f7af51af5f2602596916f38a38df2e33de0 # v3.0.2
+        with:
+          tag_name: ${{ steps.semver.outputs.semantic_version }}
+          files: dist/*/bb-*
+          generate_release_notes: true
