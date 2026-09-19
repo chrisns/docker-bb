@@ -13,7 +13,7 @@
 # Run with:
 #   docker build -f release/Dockerfile --build-arg TARGET=riscv64-linux-musl \
 #     --output type=local,dest=release/dist .
-FROM --platform=$BUILDPLATFORM debian:trixie-slim@sha256:d7e12182ce18b85b93007c1dedf31f2d29e01ccf3182cc4017c709b6259bc132 AS build
+FROM --platform=$BUILDPLATFORM debian:trixie-slim@sha256:e27e3dbef3b2064bed82f2fef343c0d02a4b8d5675e5b2c511883442e001630d AS build
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl xz-utils ca-certificates make binutils autotools-dev \
     && rm -rf /var/lib/apt/lists/*
