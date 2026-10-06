@@ -4,7 +4,7 @@
 # for the same technique targeting native platforms). Run with:
 #   docker build -f web/Dockerfile --output type=local,dest=web/dist .
 # to place bb.wasm directly in web/dist alongside the static page assets.
-FROM --platform=$BUILDPLATFORM debian:trixie-slim@sha256:a99cfc517144bc59b1978475ec53b46ecabec7e43635402ee5b77cc54cd1b20a AS build
+FROM --platform=$BUILDPLATFORM debian:trixie-slim@sha256:a29215f6a35e51e22adffa17f89e9d2ef06214e64a2bad10d765c46aea49f11f AS build
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl xz-utils ca-certificates make binutils autotools-dev \
     && rm -rf /var/lib/apt/lists/*
@@ -93,7 +93,7 @@ RUN cp /usr/share/misc/config.guess /usr/share/misc/config.sub . \
 # it independently, client-side, with an existing tracker-module player --
 # libopenmpt (BSD-3-Clause/BSL-1.0) is the mature, actively maintained one,
 # with an official prebuilt WebAssembly build for exactly this.
-FROM --platform=$BUILDPLATFORM debian:trixie-slim@sha256:a99cfc517144bc59b1978475ec53b46ecabec7e43635402ee5b77cc54cd1b20a AS openmpt
+FROM --platform=$BUILDPLATFORM debian:trixie-slim@sha256:a29215f6a35e51e22adffa17f89e9d2ef06214e64a2bad10d765c46aea49f11f AS openmpt
 RUN apt-get update && apt-get install -y --no-install-recommends curl ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 ARG LIBOPENMPT_VERSION=0.8.7
