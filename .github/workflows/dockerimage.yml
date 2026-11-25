@@ -3,7 +3,7 @@ on: [push]
 
 jobs:
   build:
-    uses: chrisns/.github/.github/workflows/dockerbuild.yml@9b4214ff3bdd9d8595bdf739447ca3e4a2ead710 # main
+    uses: chrisns/.github/.github/workflows/dockerbuild.yml@dab47287818955a93f34d38aaf22363f017f7adc # main
     with:
       platforms: linux/amd64,linux/arm/v6,linux/arm/v7,linux/arm64,linux/ppc64le,linux/s390x
     secrets:
